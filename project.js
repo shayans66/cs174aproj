@@ -21,6 +21,19 @@ class Balloon {
     }
 }
 
+class Bucket {
+    constructor(shapes, materials, direction, x) {
+        this.shapes = shapes;
+        this.materials = materials;
+        this.direction = direction;
+        this.x = x;
+    }
+    draw_bucket(context, program_state, model_transform) {
+        model_transform = model_transform.times(Mat4.translation(this.x, 0, 0));
+        this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
+    }
+}
+
 export class Project extends Scene {
     /**
      *  **Base_scene** is a Scene that can be added to any display canvas.
@@ -31,7 +44,8 @@ export class Project extends Scene {
         super();
 
         this.shapes = {
-            sphere: new Subdivision_Sphere(4)
+            sphere: new Subdivision_Sphere(4),
+            cube: new Cube()
         }
 
         this.materials = {
@@ -45,6 +59,9 @@ export class Project extends Scene {
         this.balloons.push(new Balloon(this.shapes, this.materials, rand,0, 0));
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.previous_time = 0;
+
+        this.buckets = [];
+        this.buckets.push(new Bucket(this.shapes, this.materials, "right", 0));
     }
 
     make_control_panel() {
@@ -55,7 +72,7 @@ export class Project extends Scene {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
-            program_state.set_camera(Mat4.translation(0, -10, -30));
+            program_state.set_camera(Mat4.translation(0, -11, -30));
         }
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
@@ -78,6 +95,21 @@ export class Project extends Scene {
         for (let i = 0; i < this.balloons.length; i++){
             this.balloons[i].y += .1;
             this.balloons[i].draw_balloon(context, program_state, model_transform);
+        }
+        for (let i = 0; i < this.buckets.length; i++) {
+            if (this.buckets[i].direction == "left") {
+                this.buckets[i].x -= .5;
+            }
+            else {
+                this.buckets[i].x += .5;
+            }
+            if (this.buckets[i].x >= 22) {
+                this.buckets[i].direction = "left";
+            }
+            else if (this.buckets[i].x <= -22) {
+                this.buckets[i].direction = "right";
+            }
+            this.buckets[i].draw_bucket(context, program_state, model_transform);
         }
     }
 }
