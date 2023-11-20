@@ -56,7 +56,7 @@ export class Project extends Scene {
 
         this.balloons = [];
         let rand = color(Math.random(), Math.random(), Math.random(), 1);
-        this.balloons.push(new Balloon(this.shapes, this.materials, rand,0, 0));
+        this.balloons.push(new Balloon(this.shapes, this.materials, rand,0, 2.5));
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.previous_time = 0;
 
@@ -87,7 +87,7 @@ export class Project extends Scene {
         if (current_time - this.previous_time > 2000) {
             let random_x = (Math.random()-0.5) * 40;
             let rand = color(Math.random(), Math.random(), Math.random(), 1);
-            this.balloons.push(new Balloon(this.shapes, this.materials, rand, random_x, 0))
+            this.balloons.push(new Balloon(this.shapes, this.materials, rand, random_x, 2.5))
             this.previous_time = current_time;
         }
 
