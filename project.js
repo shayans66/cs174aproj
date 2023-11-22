@@ -8,6 +8,11 @@ const {Subdivision_Sphere, Cube, Axis_Arrows, Textured_Phong} = defs
 let balloons = [];
 const canvas = document.getElementById("main-canvas");
 
+const maxX = 20
+const minX = -20
+const spawnY = 2.5;
+const maxY = 25;
+
 function getMousePos(event) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = rect.width / canvas.clientWidth;
@@ -17,6 +22,10 @@ function getMousePos(event) {
         x: (event.clientX - rect.left) * scaleX,
         y: (event.clientY - rect.top) * scaleY
     };
+}
+
+function getRandomNumberBetween(low, high) {
+    return Math.floor(Math.random() * (high - low + 1)) + low;
 }
 
 
@@ -31,16 +40,18 @@ canvas.addEventListener("click", function(event) {
 
 function convertToB(x, y) {
     // Define the transformation parameters
-    const sx = 0.03704; // Scaling factor for x-axis
-    const Tx = -0.741; // Translation along x-axis
-    let sy = 0.0432692308;
+    const sx = (maxX - minX)/canvas.clientWidth;
+
+    // Scaling factor for x-axis
+    const Tx = minX * sx; // Translation along x-axis
+    let sy = (maxY - spawnY) / 520;
     let mid = y - 520;
 
     // Calculate the transformed value
-    let yPrime = -sy * mid + 2.5;
+    let yPrime = -sy * mid + spawnY;
 
     // Calculate the transformed x and y coordinates
-    const xPrime = sx * x + Tx - 20;
+    const xPrime = sx * x + Tx + minX;
 
     return { x: xPrime, y: yPrime };
 }
@@ -64,17 +75,12 @@ class Balloon {
     }
 
     is_clicked(mouse_x, mouse_y) {
-        //convert mouse_x (1080) and mouse_y (600) to this coordinate system
         const transformedPoint = convertToB(mouse_x, mouse_y);
         const xPrime = transformedPoint.x;
         const yPrime = transformedPoint.y;
-        console.log("xPrime is " + xPrime);
-        console.log("yPrime is " + yPrime);
-        console.log("this.x is " + this.x);
-        console.log("this.y is " + this.y);
         const distance_squared = (xPrime - this.x) ** 2 + (yPrime - this.y) ** 2;
-        const radius_squared_x = 2 ** 2; // Assuming radius is 1.5 (adjust according to your scale) in the x-direction
-        const radius_squared_y = 3.75 ** 2; // Assuming radius is 1.5 (adjusted for y-stretch) in the y-direction
+        const radius_squared_x = 1.5 ** 2;
+        const radius_squared_y = 2.5 ** 2;
         return (distance_squared <= radius_squared_x) || (distance_squared <= radius_squared_y);
 
     }
@@ -121,9 +127,7 @@ export class Project extends Scene {
         }
 
 
-
-        balloons = [];
-        let rand = color(Math.random(), Math.random(), Math.random(), 1);
+        let rand = color(getRandomNumberBetween(100, 200), getRandomNumberBetween(100, 200), getRandomNumberBetween(100, 200), 1);
         balloons.push(new Balloon(this.shapes, this.materials, rand,0, 2.5));
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.previous_time = 0;
@@ -154,12 +158,12 @@ export class Project extends Scene {
         let current_time = program_state.animation_time;
 
         if (current_time - this.previous_time > 2000) {
-            let random_x = (Math.random() - 0.5) * 40;
+            let random_x = (Math.random() - 0.5) * (maxX - minX);
             let rand = color(Math.random(), Math.random(), Math.random(), 1);
-            balloons.push(new Balloon(this.shapes, this.materials, rand, random_x, 2.5))
+            balloons.push(new Balloon(this.shapes, this.materials, rand, random_x, spawnY))
             this.previous_time = current_time;
         }
-        balloons = balloons.filter(balloon => balloon.y < 25);
+        balloons = balloons.filter(balloon => balloon.y < maxY);
 
         let model_transform = Mat4.identity();
         for (let i = 0; i < balloons.length; i++){
