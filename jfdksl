@@ -1,0 +1,45 @@
+// ... (Previous code remains unchanged)
+
+class FallingObject {
+  constructor(shape, material, x, y) {
+    this.shape = shape;
+    this.material = material;
+    this.x = x;
+    this.y = y;
+    this.initial_y = y; // Store the initial y position for reference
+    this.gravity = 0.005; // Set a gravity value
+    this.vertical_speed = 0; // Initialize vertical speed
+    this.falling = false; // Flag to indicate if object is falling
+  }
+
+  fall() {
+    if (this.falling) {
+      this.vertical_speed += this.gravity; // Apply gravity to vertical speed
+      this.y -= this.vertical_speed; // Update y position based on vertical speed
+    }
+  }
+
+  draw(context, program_state, model_transform) {
+    model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
+    this.shape.draw(context, program_state, model_transform, this.material);
+  }
+
+  start_fall() {
+    this.falling = true; // Trigger the falling effect
+  }
+}
+
+canvas.addEventListener("click", function (event) {
+  const mousePos = getMousePos(event);
+  for (let i = 0; i < balloons.length; i++) {
+    if (balloons[i].is_clicked(mousePos.x, mousePos.y)) {
+      let object_color = color(Math.random(), Math.random(), Math.random(), 1);
+      let falling_object = new FallingObject(project.shapes.sphere, new Material(new Textured_Phong(), { color: object_color }), balloons[i].x, balloons[i].y);
+      falling_objects.push(falling_object);
+      falling_object.start_fall(); // Trigger falling for the object
+      balloons[i].delete();
+    }
+  }
+});
+
+// ... (The rest of your code remains unchanged)

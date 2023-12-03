@@ -28,6 +28,35 @@ function getRandomNumberBetween(low, high) {
     return Math.floor(Math.random() * (high - low + 1)) + low;
 }
 
+class FallingObject {
+    constructor(shape, material, x, y) {
+        this.shape = shape;
+        this.material = material;
+        this.x = x;
+        this.y = y;
+        this.initial_y = y; // Store the initial y position for reference
+        this.gravity = 0.005; // Set a gravity value
+        this.vertical_speed = 0; // Initialize vertical speed
+        this.falling = false; // Flag to indicate if object is falling
+    }
+
+    fall() {
+        if (this.falling) {
+            this.vertical_speed += this.gravity; // Apply gravity to vertical speed
+            this.y -= this.vertical_speed; // Update y position based on vertical speed
+        }
+    }
+
+    draw(context, program_state, model_transform) {
+        model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
+        this.shape.draw(context, program_state, model_transform, this.material);
+    }
+
+    start_fall() {
+        this.falling = true; // Trigger the falling effect
+    }
+}
+
 
 canvas.addEventListener("click", function(event) {
     const mousePos = getMousePos(event);
