@@ -7,6 +7,7 @@ const {
 const {Subdivision_Sphere, Cube, Axis_Arrows, Textured_Phong} = defs
 let balloons = [];
 const canvas = document.getElementById("main-canvas");
+let falling_objects = [];
 
 const maxX = 20
 const minX = -20
@@ -52,20 +53,43 @@ class FallingObject {
         this.shape.draw(context, program_state, model_transform, this.material);
     }
 
+    update_position() {
+        if (this.is_falling) {
+            this.velocity_y += this.acceleration_y; // Update vertical velocity based on gravity
+            this.y += this.velocity_y; // Update vertical position based on velocity
+
+            // Optional: Stop falling when the object reaches a certain height or ground level (e.g., y = 0)
+            // You can add additional conditions to stop falling based on your game's requirements
+            // For example, if (this.y <= 0) { this.is_falling = false; }
+        }
+    }
+
     start_fall() {
         this.falling = true; // Trigger the falling effect
     }
 }
 
 
-canvas.addEventListener("click", function(event) {
+// Assuming you have shapes and materials directly accessible in the current scope
+// For example:
+// const shapes = { sphere: new Subdivision_Sphere(4), cube: new Cube() };
+// const materials = { phong: new Material(new Textured_Phong(), { color: hex_color("#2cc7e2") }) };
+
+canvas.addEventListener("click", function (event) {
     const mousePos = getMousePos(event);
     for (let i = 0; i < balloons.length; i++) {
         if (balloons[i].is_clicked(mousePos.x, mousePos.y)) {
+            let object_color = color(Math.random(), Math.random(), Math.random(), 1);
+            let falling_object = new FallingObject(new Subdivision_Sphere(4), new Material(new Textured_Phong(), { color: object_color }), balloons[i].x, balloons[i].y);
+            falling_objects.push(falling_object);
+            falling_object.start_fall(); // Trigger falling for the object
             balloons[i].delete();
         }
     }
 });
+
+// ... (The rest of your code remains unchanged)
+
 
 function convertToB(x, y) {
     // Define the transformation parameters
@@ -146,7 +170,7 @@ export class Project extends Scene {
 
         this.shapes = {
             sphere: new Subdivision_Sphere(4),
-            cube: new Cube()
+            cube: new Cube(),
         }
 
         this.materials = {
@@ -213,6 +237,14 @@ export class Project extends Scene {
                 this.buckets[i].direction = "right";
             }
             this.buckets[i].draw_bucket(context, program_state, model_transform);
+        }
+
+        // Iterate through falling objects and draw them
+        for (let i = 0; i < falling_objects.length; i++) {
+            let a = falling_objects[i]
+            // console.log('fjsk',a);
+            a.update_position(); // Update the position of falling objects based on gravity
+            falling_objects[i].draw(context, program_state, model_transform); // Draw falling objects
         }
     }
 }
