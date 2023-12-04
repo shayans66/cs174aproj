@@ -36,22 +36,23 @@ class FallingObject {
         this.x = x;
         this.y = y;
         this.initial_y = y; // Store the initial y position for reference
-        this.gravity = 0.005; // Set a gravity value
         this.vertical_speed = 0; // Initialize vertical speed
         this.falling = false; // Flag to indicate if object is falling
         // this.is_falling = true; // Flag to indicate if object is falling
+
+        this.gravity = 0.005; // Set a gravity value
         this.idk = .01
 
         this.velocity_y = .1;
         this.acceleration_y = .01; // Update vertical velocity based on gravity
     }
 
-    fall() {
-        if (this.falling) {
-            this.vertical_speed += this.gravity; // Apply gravity to vertical speed
-            this.y -= this.vertical_speed; // Update y position based on vertical speed
-        }
-    }
+    // fall() {
+    //     if (this.falling) {
+    //         this.vertical_speed += this.gravity; // Apply gravity to vertical speed
+    //         this.y -= this.vertical_speed; // Update y position based on vertical speed
+    //     }
+    // }
 
     draw(context, program_state, model_transform) {
         model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
@@ -255,17 +256,18 @@ export class Project extends Scene {
         }
 
         // Iterate through falling objects and draw them
-        console.log(falling_objects);
+        // console.log(falling_objects);
         for (let i = 0; i < falling_objects.length; i++) {
             // console.log(i);
             let a = falling_objects[i]
-            console.log('fjsk',a);
-            let y = a.update_position(); // Update the position of falling objects based on gravity
+            console.log(i,a);
+            let vel = a.update_position(); // Update the position of falling objects based on gravity
             // model_transform = model_transform.times(Mat4.translation(1, 0, 0));
-
-            model_transform = model_transform.times(Mat4.translation(0, -y, 0));
+            let tmp = model_transform
+            let tmp2 = model_transform = tmp.times(Mat4.translation(0, -vel, 0));
             // model_transform = model_transform.times(Mat4.translation(0, -1, 0));
-            falling_objects[i].draw(context, program_state, model_transform); // Draw falling objects
+            // falling_objects[i].draw(context, program_state, model_transform); // Draw falling objects
+            falling_objects[i].draw(context, program_state, tmp2); // Draw falling objects
 
             // if(a.y<0)falling_objects[i].delete();
         }
