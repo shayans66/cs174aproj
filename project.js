@@ -47,13 +47,6 @@ class FallingObject {
         this.acceleration_y = .01; // Update vertical velocity based on gravity
     }
 
-    // fall() {
-    //     if (this.falling) {
-    //         this.vertical_speed += this.gravity; // Apply gravity to vertical speed
-    //         this.y -= this.vertical_speed; // Update y position based on vertical speed
-    //     }
-    // }
-
     draw(context, program_state, model_transform) {
         model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
         this.shape.draw(context, program_state, model_transform, this.material);
@@ -84,6 +77,15 @@ class FallingObject {
     start_fall() {
         this.falling = true; // Trigger the falling effect
     }
+
+    // fall() {
+    //     if (this.falling) {
+    //         this.vertical_speed += this.gravity; // Apply gravity to vertical speed
+    //         this.y -= this.vertical_speed; // Update y position based on vertical speed
+    //     }
+    // }
+
+
 }
 
 
@@ -264,7 +266,7 @@ export class Project extends Scene {
             let vel = a.update_position(); // Update the position of falling objects based on gravity
             // model_transform = model_transform.times(Mat4.translation(1, 0, 0));
             let tmp = model_transform
-            let tmp2 = model_transform = tmp.times(Mat4.translation(0, -vel, 0));
+            let tmp2 = tmp.times(Mat4.translation(0, -vel, 0));
             // model_transform = model_transform.times(Mat4.translation(0, -1, 0));
             // falling_objects[i].draw(context, program_state, model_transform); // Draw falling objects
             falling_objects[i].draw(context, program_state, tmp2); // Draw falling objects
