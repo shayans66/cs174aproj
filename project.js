@@ -39,6 +39,11 @@ class FallingObject {
         this.gravity = 0.005; // Set a gravity value
         this.vertical_speed = 0; // Initialize vertical speed
         this.falling = false; // Flag to indicate if object is falling
+        // this.is_falling = true; // Flag to indicate if object is falling
+        this.idk = .01
+
+        this.velocity_y = .1;
+        this.acceleration_y = .01; // Update vertical velocity based on gravity
     }
 
     fall() {
@@ -54,13 +59,24 @@ class FallingObject {
     }
 
     update_position() {
-        if (this.is_falling) {
-            this.velocity_y += this.acceleration_y; // Update vertical velocity based on gravity
-            this.y += this.velocity_y; // Update vertical position based on velocity
+        if (this.falling) {
+            // console.log('jfls');
+            // let
+            this.gravity += this.idk
+            this.velocity_y -= this.gravity; // Update vertical velocity based on gravity
+            // this.y -= this.velocity_y; // Update vertical position based on velocity
+            // return this.y
+
+            // console.log(this.velocity_y);
+
+            return -this.velocity_y; // Update vertical position based on velocity
+
 
             // Optional: Stop falling when the object reaches a certain height or ground level (e.g., y = 0)
             // You can add additional conditions to stop falling based on your game's requirements
             // For example, if (this.y <= 0) { this.is_falling = false; }
+
+            // return this.y
         }
     }
 
@@ -88,7 +104,6 @@ canvas.addEventListener("click", function (event) {
     }
 });
 
-// ... (The rest of your code remains unchanged)
 
 
 function convertToB(x, y) {
@@ -240,11 +255,19 @@ export class Project extends Scene {
         }
 
         // Iterate through falling objects and draw them
+        console.log(falling_objects);
         for (let i = 0; i < falling_objects.length; i++) {
+            // console.log(i);
             let a = falling_objects[i]
-            // console.log('fjsk',a);
-            a.update_position(); // Update the position of falling objects based on gravity
+            console.log('fjsk',a);
+            let y = a.update_position(); // Update the position of falling objects based on gravity
+            // model_transform = model_transform.times(Mat4.translation(1, 0, 0));
+
+            model_transform = model_transform.times(Mat4.translation(0, -y, 0));
+            // model_transform = model_transform.times(Mat4.translation(0, -1, 0));
             falling_objects[i].draw(context, program_state, model_transform); // Draw falling objects
+
+            // if(a.y<0)falling_objects[i].delete();
         }
     }
 }

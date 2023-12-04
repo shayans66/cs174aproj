@@ -1,0 +1,25 @@
+class FallingObject {
+    constructor(shape, material, x, y) {
+        // Existing code...
+
+        this.velocity_y = 0; // Initial vertical velocity
+        this.acceleration_y = -0.001; // Gravity (acceleration due to gravity)
+        this.is_falling = false; // Flag to indicate if object is falling
+    }
+
+    // Other methods...
+
+    update_position() {
+        if (this.is_falling) {
+            this.velocity_y += this.acceleration_y; // Update vertical velocity based on gravity
+            this.y += this.velocity_y; // Update vertical position based on velocity
+            if (this.y <= 0) {
+                this.is_falling = false; // Stop falling when it reaches the ground (y = 0)
+            }
+        }
+    }
+
+    start_fall() {
+        this.is_falling = true; // Start falling
+    }
+}
