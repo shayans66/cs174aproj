@@ -4,10 +4,11 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
 
-const {Subdivision_Sphere, Cube, Axis_Arrows, Textured_Phong} = defs
+const {Subdivision_Sphere, Cube, Square, Axis_Arrows, Textured_Phong} = defs
 let balloons = [];
 const canvas = document.getElementById("main-canvas");
 let falling_objects = [];
+let explosions = [];
 
 const maxX = 20
 const minX = -20
@@ -30,9 +31,9 @@ function getRandomNumberBetween(low, high) {
 }
 
 class FallingObject {
-    constructor(shape, material, x, y) {
-        this.shape = shape;
-        this.material = material;
+    constructor(shapes, materials, x, y) {
+        this.shapes = shapes;
+        this.materials = materials;
         this.x = x;
         this.y = y;
         this.initial_y = y; // Store the initial y position for reference
@@ -47,9 +48,9 @@ class FallingObject {
         this.acceleration_y = .01; // Update vertical velocity based on gravity
     }
 
-    draw(context, program_state, model_transform) {
+    draw_falling_object(context, program_state, model_transform) {
         model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
-        this.shape.draw(context, program_state, model_transform, this.material);
+        this.shapes.square.draw(context, program_state, model_transform, this.materials.debris);
     }
 
     update_position() {
@@ -99,9 +100,10 @@ canvas.addEventListener("click", function (event) {
     for (let i = 0; i < balloons.length; i++) {
         if (balloons[i].is_clicked(mousePos.x, mousePos.y)) {
             let object_color = color(Math.random(), Math.random(), Math.random(), 1);
-            let falling_object = new FallingObject(new Subdivision_Sphere(4), new Material(new Textured_Phong(), { color: object_color }), balloons[i].x, balloons[i].y);
+            let falling_object = new FallingObject(balloons[i].shapes, balloons[i].materials, balloons[i].x, balloons[i].y);
             falling_objects.push(falling_object);
             falling_object.start_fall(); // Trigger falling for the object
+            explosions.push(new Explosion(balloons[i].shapes, balloons[i].materials, balloons[i].x, balloons[i].y))
             balloons[i].delete();
         }
     }
@@ -159,8 +161,8 @@ class Balloon {
 
     draw_balloon(context, program_state, model_transform) {
         model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
-        model_transform = model_transform.times(Mat4.scale(1, 1.5, 1));
-        this.shapes.sphere.draw(context, program_state, model_transform, this.materials.phong.override({color: this.balloon_color}));
+        model_transform = model_transform.times(Mat4.scale(2, 2, 1));
+        this.shapes.square.draw(context, program_state, model_transform, this.materials.spaceship);
     }
 }
 
@@ -172,8 +174,32 @@ class Bucket {
         this.x = x;
     }
     draw_bucket(context, program_state, model_transform) {
-        model_transform = model_transform.times(Mat4.translation(this.x, 0, 0));
-        this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
+        model_transform = model_transform.times(Mat4.translation(this.x, 0.5, 0));
+        model_transform = model_transform.times(Mat4.scale(3, 3, 1));
+        this.shapes.square.draw(context, program_state, model_transform, this.materials.bucket);
+    }
+}
+
+class Explosion {
+    constructor(shapes, materials, x, y) {
+        this.shapes=shapes;
+        this.materials=materials;
+        this.x=x;
+        this.y=y;
+        this.time_to_live = 500000;
+        this.time_drawn = 0;
+        this.first_call = true;
+    }
+    draw_explosion(context, program_state){
+        let scale_f = (this.time_to_live)/300000;
+        this.shapes.square.draw(context, program_state,
+            Mat4.identity().times(Mat4.translation(this.x, this.y,0)).times(Mat4.scale(scale_f, scale_f, 0)), this.materials.explosion);
+    }
+    delete() {
+        const index = explosions.indexOf(this);
+        if (index !== -1) {
+            explosions.splice(index, 1);
+        }
     }
 }
 
@@ -189,11 +215,33 @@ export class Project extends Scene {
         this.shapes = {
             sphere: new Subdivision_Sphere(4),
             cube: new Cube(),
+            square: new Square(),
         }
 
         this.materials = {
             phong: new Material(new Textured_Phong(), {
                 color: hex_color("#2cc7e2"),
+                texture: null
+            }),
+            spaceship: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/spaceship.png")
+            }),
+            bucket: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/bucket.png")
+            }),
+            explosion: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/explosion.png")
+            }),
+            debris: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/debris.png")
             }),
         }
 
@@ -243,15 +291,15 @@ export class Project extends Scene {
         }
         for (let i = 0; i < this.buckets.length; i++) {
             if (this.buckets[i].direction === "left") {
-                this.buckets[i].x -= .5;
+                this.buckets[i].x -= .1;
             }
             else {
-                this.buckets[i].x += .5;
+                this.buckets[i].x += .1;
             }
-            if (this.buckets[i].x >= 22) {
+            if (this.buckets[i].x >= 20) {
                 this.buckets[i].direction = "left";
             }
-            else if (this.buckets[i].x <= -22) {
+            else if (this.buckets[i].x <= -20) {
                 this.buckets[i].direction = "right";
             }
             this.buckets[i].draw_bucket(context, program_state, model_transform);
@@ -262,16 +310,31 @@ export class Project extends Scene {
         for (let i = 0; i < falling_objects.length; i++) {
             // console.log(i);
             let a = falling_objects[i]
-            console.log(i,a);
+            //console.log(i,a);
             let vel = a.update_position(); // Update the position of falling objects based on gravity
             // model_transform = model_transform.times(Mat4.translation(1, 0, 0));
             let tmp = model_transform
             let tmp2 = tmp.times(Mat4.translation(0, -vel, 0));
             // model_transform = model_transform.times(Mat4.translation(0, -1, 0));
             // falling_objects[i].draw(context, program_state, model_transform); // Draw falling objects
-            falling_objects[i].draw(context, program_state, tmp2); // Draw falling objects
+            falling_objects[i].draw_falling_object(context, program_state, tmp2); // Draw falling objects
 
             // if(a.y<0)falling_objects[i].delete();
+        }
+
+        for (let i = 0; i < explosions.length; i++) {
+            if (explosions[i].time_to_live <= 0){
+                explosions[i].delete();
+                continue;
+            }
+            else {
+                explosions[i].time_to_live -= (current_time - explosions[i].time_drawn)
+            }
+            if (explosions[i].first_call === true) {
+                explosions[i].first_call = false;
+                explosions[i].time_drawn = current_time;
+            }
+            explosions[i].draw_explosion(context, program_state);
         }
     }
 }
