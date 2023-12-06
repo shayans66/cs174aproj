@@ -113,18 +113,16 @@ canvas.addEventListener("click", function (event) {
 
 function convertToB(x, y) {
     // Define the transformation parameters
-    const sx = (maxX - minX)/canvas.clientWidth;
-
-    // Scaling factor for x-axis
-    const Tx = minX * sx; // Translation along x-axis
-    let sy = (maxY - spawnY) / 520;
+    const sx = 0.03704; // Scaling factor for x-axis
+    const Tx = -0.741; // Translation along x-axis
+    let sy = 0.0432692308;
     let mid = y - 520;
 
     // Calculate the transformed value
-    let yPrime = -sy * mid + spawnY;
+    let yPrime = -sy * mid + 2.5;
 
     // Calculate the transformed x and y coordinates
-    const xPrime = sx * x + Tx + minX;
+    const xPrime = sx * x + Tx - 20;
 
     return { x: xPrime, y: yPrime };
 }
@@ -152,8 +150,8 @@ class Balloon {
         const xPrime = transformedPoint.x;
         const yPrime = transformedPoint.y;
         const distance_squared = (xPrime - this.x) ** 2 + (yPrime - this.y) ** 2;
-        const radius_squared_x = 1.5 ** 2;
-        const radius_squared_y = 2.5 ** 2;
+        const radius_squared_x = 2 ** 2;
+        const radius_squared_y = 3.5 ** 2;
         return (distance_squared <= radius_squared_x) || (distance_squared <= radius_squared_y);
 
     }
