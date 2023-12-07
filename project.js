@@ -260,6 +260,25 @@ class Explosion {
     }
 }
 
+class GameOver {
+    constructor(shapes, materials) {
+        this.shapes = shapes;
+        this.materials = materials;
+    }
+
+    draw_game_over(context, program_state, x, y) {
+        this.shapes.square.draw(
+            context,
+            program_state,
+            Mat4.identity()
+                .times(Mat4.translation(0, 11, 0))
+                .times(Mat4.scale(10, 10, 10)), // Adjust the scale if needed
+            this.materials.gameover
+        );
+    }
+}
+
+
 export class Project extends Scene {
     /**
      *  **Base_scene** is a Scene that can be added to any display canvas.
@@ -325,6 +344,11 @@ export class Project extends Scene {
                 ambient: 1,
                 texture: new Texture("assets/tnt.png")
             }),
+            gameover: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/game.png")
+            }),
         }
         let randtype = Math.floor(Math.random() * 3) + 1;
         spaceships.push(new SpaceShip(this.shapes, this.materials,0, 2.5, randtype));
@@ -355,6 +379,12 @@ export class Project extends Scene {
 
 
         let current_time = program_state.animation_time;
+
+        if (current_time >= 30 * 1000) {
+            let gameover = new GameOver(this.shapes, this.materials);
+            gameover.draw_game_over(context, program_state);
+            return;
+        }
 
         if (current_time - this.previous_time > 2000) {
             let random_x = (Math.random() - 0.5) * (maxX - minX);
