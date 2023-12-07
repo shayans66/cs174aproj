@@ -180,12 +180,12 @@ class SpaceShip {
         this.y = y;
         this.type = 0;
         if (type1 === 1){
-            this.type = 1;
+            this.type = 1; // blue spaceship, light, fast, and most points
         }
-        else if (type1 === 2){
+        else if (type1 === 2){ // golden spaceship, heavy, slow, and least points
             this.type = 2;
         }
-        else if (type1 === 3){
+        else if (type1 === 3){ // red spaceship, has tnt, moderate weight
             this.type = 3;
         }
     }
