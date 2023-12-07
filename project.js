@@ -5,7 +5,7 @@ const {
 } = tiny;
 
 const {Subdivision_Sphere, Cube, Square, Axis_Arrows, Textured_Phong} = defs
-let balloons = [];
+let spaceships = [];
 const canvas = document.getElementById("main-canvas");
 let falling_objects = [];
 let explosions = [];
@@ -14,6 +14,7 @@ const maxX = 20
 const minX = -20
 const spawnY = 2.5;
 const maxY = 25;
+let score = 0;
 
 function getMousePos(event) {
     const rect = canvas.getBoundingClientRect();
@@ -28,6 +29,21 @@ function getMousePos(event) {
 
 function getRandomNumberBetween(low, high) {
     return Math.floor(Math.random() * (high - low + 1)) + low;
+}
+
+function addScore (type){ // TO BE USED WHEN DEBRIS HITS BUCKET
+    if (type === 1){ // green spaceship, most points
+        score += 20;
+    }
+    else if (type === 2){ // blue spaceship, medium points
+        score += 10;
+    }
+    else if (type === 3){ // golden spaceship, least points
+        score += 5;
+    }
+    else if (type === 4){ // tnt, negative points
+        score -= 10;
+    }
 }
 
 class FallingObject {
@@ -97,14 +113,14 @@ class FallingObject {
 
 canvas.addEventListener("click", function (event) {
     const mousePos = getMousePos(event);
-    for (let i = 0; i < balloons.length; i++) {
-        if (balloons[i].is_clicked(mousePos.x, mousePos.y)) {
+    for (let i = 0; i < spaceships.length; i++) {
+        if (spaceships[i].is_clicked(mousePos.x, mousePos.y)) {
             let object_color = color(Math.random(), Math.random(), Math.random(), 1);
-            let falling_object = new FallingObject(balloons[i].shapes, balloons[i].materials, balloons[i].x, balloons[i].y);
+            let falling_object = new FallingObject(spaceships[i].shapes, spaceships[i].materials, spaceships[i].x, spaceships[i].y);
             falling_objects.push(falling_object);
             falling_object.start_fall(); // Trigger falling for the object
-            explosions.push(new Explosion(balloons[i].shapes, balloons[i].materials, balloons[i].x, balloons[i].y))
-            balloons[i].delete();
+            explosions.push(new Explosion(spaceships[i].shapes, spaceships[i].materials, spaceships[i].x, spaceships[i].y))
+            spaceships[i].delete();
         }
     }
 });
@@ -127,21 +143,55 @@ function convertToB(x, y) {
     return { x: xPrime, y: yPrime };
 }
 
+function gravitydiff(type){
+    const thrust = 100;
+    const gravity = 9.8; // m/s², acceleration due to gravity
+    let mass = 0;
+    if (type === 1){ // green spaceship, light
+        mass = 3;
+    }
+    else if (type === 2){ // blue spaceship, medium
+        mass = 4;
+    }
+    else if (type === 3){ // golden spaceship, heavy
+        mass = 5;
+    }
+    else if (type === 4){ // tnt, weight is same as blue spaceship
+        mass = 4;
+    }
+    const netForce= thrust - mass * gravity;
+    const acceleration = netForce / mass;
+    const positionChange = acceleration / 100; // 0.001 seconds for milliseconds
+    return positionChange;
+}
 
 
-class Balloon {
-    constructor(shapes, materials, balloon_color, x, y) {
+
+class SpaceShip {
+    constructor(shapes, materials, x, y, type1) {
         this.shapes = shapes;
         this.materials = materials;
         this.x = x;
         this.y = y;
-        this.balloon_color = balloon_color;
+        this.type = 0;
+        if (type1 === 1){
+            this.type = 1;
+        }
+        else if (type1 === 2){
+            this.type = 2;
+        }
+        else if (type1 === 3){
+            this.type = 3;
+        }
+        else if (type1 === 4){
+            this.type = 4;
+        }
     }
 
     delete() {
-        const index = balloons.indexOf(this);
+        const index = spaceships.indexOf(this);
         if (index !== -1) {
-            balloons.splice(index, 1);
+            spaceships.splice(index, 1);
         }
     }
 
@@ -153,14 +203,25 @@ class Balloon {
         const radius_squared_x = 2 ** 2;
         const radius_squared_y = 3.5 ** 2;
         return (distance_squared <= radius_squared_x) || (distance_squared <= radius_squared_y);
-
     }
 
-
-    draw_balloon(context, program_state, model_transform) {
+    draw_spaceship(context, program_state, model_transform) {
         model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
         model_transform = model_transform.times(Mat4.scale(2, 2, 1));
-        this.shapes.square.draw(context, program_state, model_transform, this.materials.spaceship);
+        if (this.type === 1){
+            this.shapes.square.draw(context, program_state, model_transform, this.materials.spaceship1);
+        }
+        else if (this.type === 2){
+            this.shapes.square.draw(context, program_state, model_transform, this.materials.spaceship2);
+
+        }
+        else if (this.type === 3){
+            this.shapes.square.draw(context, program_state, model_transform, this.materials.spaceship3);
+
+        }
+        else if (this.type === 4){
+            this.shapes.square.draw(context, program_state, model_transform, this.materials.spaceshiptnt);
+        }
     }
 }
 
@@ -221,10 +282,25 @@ export class Project extends Scene {
                 color: hex_color("#2cc7e2"),
                 texture: null
             }),
-            spaceship: new Material(new Textured_Phong(), {
+            spaceship1: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1,
-                texture: new Texture("assets/spaceship.png")
+                texture: new Texture("assets/greenrocket.png")
+            }),
+            spaceship2: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/bluerocket.png")
+            }),
+            spaceship3: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/goldenrocket.png")
+            }),
+            spaceshiptnt: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/redrocket.png")
             }),
             bucket: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
@@ -242,10 +318,8 @@ export class Project extends Scene {
                 texture: new Texture("assets/debris.png")
             }),
         }
-
-
-        let rand = color(getRandomNumberBetween(100, 200), getRandomNumberBetween(100, 200), getRandomNumberBetween(100, 200), 1);
-        balloons.push(new Balloon(this.shapes, this.materials, rand,0, 2.5));
+        let randtype = Math.floor(Math.random() * 4) + 1;
+        spaceships.push(new SpaceShip(this.shapes, this.materials,0, 2.5, randtype));
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.previous_time = 0;
 
@@ -276,16 +350,17 @@ export class Project extends Scene {
 
         if (current_time - this.previous_time > 2000) {
             let random_x = (Math.random() - 0.5) * (maxX - minX);
-            let rand = color(Math.random(), Math.random(), Math.random(), 1);
-            balloons.push(new Balloon(this.shapes, this.materials, rand, random_x, spawnY))
+            let randtype = Math.floor(Math.random() * 4) + 1;
+            spaceships.push(new SpaceShip(this.shapes, this.materials, random_x, spawnY, randtype))
             this.previous_time = current_time;
         }
-        balloons = balloons.filter(balloon => balloon.y < maxY);
+        spaceships = spaceships.filter(spaceship => spaceship.y < maxY);
 
         let model_transform = Mat4.identity();
-        for (let i = 0; i < balloons.length; i++){
-            balloons[i].y += .1;
-            balloons[i].draw_balloon(context, program_state, model_transform);
+        for (let i = 0; i < spaceships.length; i++){
+            //console.log(gravitydiff(spaceships[i].type));
+            spaceships[i].y += gravitydiff(spaceships[i].type);
+            spaceships[i].draw_spaceship(context, program_state, model_transform);
         }
         for (let i = 0; i < this.buckets.length; i++) {
             if (this.buckets[i].direction === "left") {
