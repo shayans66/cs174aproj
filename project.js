@@ -10,11 +10,12 @@ const canvas = document.getElementById("main-canvas");
 let falling_objects = [];
 let explosions = [];
 
-const maxX = 20
-const minX = -20
+const maxX = 20;
+const minX = -20;
 const spawnY = 2.5;
 const maxY = 25;
 let score = 0;
+let pointsletgo = 0;
 
 function getMousePos(event) {
     const rect = canvas.getBoundingClientRect();
@@ -32,16 +33,13 @@ function getRandomNumberBetween(low, high) {
 }
 
 function addScore (type){ // TO BE USED WHEN DEBRIS HITS BUCKET
-    if (type === 1){ // green spaceship, most points
-        score += 20;
-    }
-    else if (type === 2){ // blue spaceship, medium points
+    if (type === 1){ // blue spaceship, most points
         score += 10;
     }
-    else if (type === 3){ // golden spaceship, least points
+    else if (type === 2){ // golden spaceship, least points
         score += 5;
     }
-    else if (type === 4){ // tnt, negative points
+    else if (type === 3){ // red spaceship, negative points
         score -= 10;
     }
 }
@@ -147,25 +145,20 @@ function gravitydiff(type){
     const thrust = 100;
     const gravity = 9.8; // m/s², acceleration due to gravity
     let mass = 0;
-    if (type === 1){ // green spaceship, light
+    if (type === 1){ // blue spaceship, light
+        mass = 2.5;
+    }
+    else if (type === 2){ // golden spaceship, heavy
+        mass = 3.5;
+    }
+    else if (type === 3){ // red spaceship, tnt
         mass = 3;
-    }
-    else if (type === 2){ // blue spaceship, medium
-        mass = 4;
-    }
-    else if (type === 3){ // golden spaceship, heavy
-        mass = 5;
-    }
-    else if (type === 4){ // tnt, weight is same as blue spaceship
-        mass = 4;
     }
     const netForce= thrust - mass * gravity;
     const acceleration = netForce / mass;
     const positionChange = acceleration / 100; // 0.001 seconds for milliseconds
     return positionChange;
 }
-
-
 
 class SpaceShip {
     constructor(shapes, materials, x, y, type1) {
@@ -182,9 +175,6 @@ class SpaceShip {
         }
         else if (type1 === 3){
             this.type = 3;
-        }
-        else if (type1 === 4){
-            this.type = 4;
         }
     }
 
@@ -216,10 +206,6 @@ class SpaceShip {
 
         }
         else if (this.type === 3){
-            this.shapes.square.draw(context, program_state, model_transform, this.materials.spaceship3);
-
-        }
-        else if (this.type === 4){
             this.shapes.square.draw(context, program_state, model_transform, this.materials.spaceshiptnt);
         }
     }
@@ -285,14 +271,9 @@ export class Project extends Scene {
             spaceship1: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1,
-                texture: new Texture("assets/greenrocket.png")
-            }),
-            spaceship2: new Material(new Textured_Phong(), {
-                color: hex_color("#000000"),
-                ambient: 1,
                 texture: new Texture("assets/bluerocket.png")
             }),
-            spaceship3: new Material(new Textured_Phong(), {
+            spaceship2: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1,
                 texture: new Texture("assets/goldenrocket.png")
@@ -318,7 +299,7 @@ export class Project extends Scene {
                 texture: new Texture("assets/debris.png")
             }),
         }
-        let randtype = Math.floor(Math.random() * 4) + 1;
+        let randtype = Math.floor(Math.random() * 3) + 1;
         spaceships.push(new SpaceShip(this.shapes, this.materials,0, 2.5, randtype));
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.previous_time = 0;
@@ -350,7 +331,7 @@ export class Project extends Scene {
 
         if (current_time - this.previous_time > 2000) {
             let random_x = (Math.random() - 0.5) * (maxX - minX);
-            let randtype = Math.floor(Math.random() * 4) + 1;
+            let randtype = Math.floor(Math.random() * 3) + 1;
             spaceships.push(new SpaceShip(this.shapes, this.materials, random_x, spawnY, randtype))
             this.previous_time = current_time;
         }
