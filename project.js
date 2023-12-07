@@ -45,7 +45,7 @@ function addScore (type){ // TO BE USED WHEN DEBRIS HITS BUCKET
 }
 
 class FallingObject {
-    constructor(shapes, materials, x, y) {
+    constructor(shapes, materials, x, y, type1) {
         this.shapes = shapes;
         this.materials = materials;
         this.x = x;
@@ -60,11 +60,23 @@ class FallingObject {
 
         this.velocity_y = .1;
         this.acceleration_y = .01; // Update vertical velocity based on gravity
+        this.type = type1;
     }
 
     draw_falling_object(context, program_state, model_transform) {
         model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
-        this.shapes.square.draw(context, program_state, model_transform, this.materials.debris);
+        if (this.type === 1){
+            this.shapes.square.draw(context, program_state, model_transform, this.materials.minerals);
+
+        }
+        else if (this.type === 2){
+            this.shapes.square.draw(context, program_state, model_transform, this.materials.bananas);
+
+        }
+        else{
+            this.shapes.square.draw(context, program_state, model_transform, this.materials.tnt);
+        }
+
     }
 
     update_position() {
@@ -114,7 +126,7 @@ canvas.addEventListener("click", function (event) {
     for (let i = 0; i < spaceships.length; i++) {
         if (spaceships[i].is_clicked(mousePos.x, mousePos.y)) {
             let object_color = color(Math.random(), Math.random(), Math.random(), 1);
-            let falling_object = new FallingObject(spaceships[i].shapes, spaceships[i].materials, spaceships[i].x, spaceships[i].y);
+            let falling_object = new FallingObject(spaceships[i].shapes, spaceships[i].materials, spaceships[i].x, spaceships[i].y, spaceships[i].type);
             falling_objects.push(falling_object);
             falling_object.start_fall(); // Trigger falling for the object
             explosions.push(new Explosion(spaceships[i].shapes, spaceships[i].materials, spaceships[i].x, spaceships[i].y))
@@ -297,6 +309,21 @@ export class Project extends Scene {
                 color: hex_color("#000000"),
                 ambient: 1,
                 texture: new Texture("assets/debris.png")
+            }),
+            minerals: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/minerals.png")
+            }),
+            bananas: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/bananas.png")
+            }),
+            tnt: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/tnt.png")
             }),
         }
         let randtype = Math.floor(Math.random() * 3) + 1;
