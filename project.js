@@ -81,16 +81,15 @@ class FallingObject {
 
     update_position() {
         if (this.falling) {
-            // console.log('jfls');
-            // let
             this.gravity += this.idk
             this.velocity_y -= this.gravity; // Update vertical velocity based on gravity
-            // this.y -= this.velocity_y; // Update vertical position based on velocity
+            this.y += this.velocity_y; // Update vertical position based on velocity
             // return this.y
 
             // console.log(this.velocity_y);
 
             return -this.velocity_y; // Update vertical position based on velocity
+            //return this.y
 
 
             // Optional: Stop falling when the object reaches a certain height or ground level (e.g., y = 0)
@@ -104,15 +103,6 @@ class FallingObject {
     start_fall() {
         this.falling = true; // Trigger the falling effect
     }
-
-    // fall() {
-    //     if (this.falling) {
-    //         this.vertical_speed += this.gravity; // Apply gravity to vertical speed
-    //         this.y -= this.vertical_speed; // Update y position based on vertical speed
-    //     }
-    // }
-
-
 }
 
 
@@ -418,9 +408,24 @@ export class Project extends Scene {
 
         // Iterate through falling objects and draw them
         // console.log(falling_objects);
+
+        // check for collision with bucket
+        let bucket = this.buckets[0];
         for (let i = 0; i < falling_objects.length; i++) {
-            // console.log(i);
-            let a = falling_objects[i]
+            let obj_type = falling_objects[i].type;
+            let a = falling_objects[i];
+
+            console.log(a.y);
+            if (false
+                //a.x > bucket.x - 2 && a.x < bucket.x + 2 && a.y <= 3
+            ) {
+                console.log("HERE");
+                addScore(obj_type);
+                console.log("Added");
+                falling_objects.splice(i, 1);
+                i--;
+            }
+
             //console.log(i,a);
             let vel = a.update_position(); // Update the position of falling objects based on gravity
             // model_transform = model_transform.times(Mat4.translation(1, 0, 0));
