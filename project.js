@@ -15,7 +15,7 @@ const minX = -20;
 const spawnY = 2.5;
 const maxY = 25;
 let score = 0;
-let pointsletgo = 0;
+let time_elapsed = 0;
 
 function getMousePos(event) {
     const rect = canvas.getBoundingClientRect();
@@ -350,7 +350,13 @@ export class Project extends Scene {
     }
 
     make_control_panel() {
-
+        this.live_string(box => {
+            box.textContent = "Score: " + (score);
+        });
+        this.new_line();
+        this.live_string(box => {
+            box.textContent = "Time Elapsed: " + (time_elapsed).toFixed(2) + " seconds";
+        });
     }
 
     display(context, program_state) {
@@ -366,9 +372,8 @@ export class Project extends Scene {
         const light_position2 = vec4(-10, 10, 10, 1);
         const light_position3 = vec4(0, -10, 10, 1);
         program_state.lights = [new Light(light_position1, color(1, 1, 1, 1), 10000)];
-
-
         let current_time = program_state.animation_time;
+        time_elapsed = current_time/1000;
 
         if (current_time >= 30 * 1000) {
             let gameover = new GameOver(this.shapes, this.materials);
@@ -382,6 +387,7 @@ export class Project extends Scene {
             spaceships.push(new SpaceShip(this.shapes, this.materials, random_x, spawnY, randtype))
             this.previous_time = current_time;
         }
+
         spaceships = spaceships.filter(spaceship => spaceship.y < maxY);
 
         let model_transform = Mat4.identity();
@@ -429,8 +435,7 @@ export class Project extends Scene {
             //console.log(i,a);
             let vel = a.update_position(); // Update the position of falling objects based on gravity
             // model_transform = model_transform.times(Mat4.translation(1, 0, 0));
-            let tmp = model_transform
-            let tmp2 = tmp.times(Mat4.translation(0, -vel, 0));
+            let tmp2 = model_transform.times(Mat4.translation(0, -vel, 0));
             // model_transform = model_transform.times(Mat4.translation(0, -1, 0));
             // falling_objects[i].draw(context, program_state, model_transform); // Draw falling objects
             falling_objects[i].draw_falling_object(context, program_state, tmp2); // Draw falling objects
