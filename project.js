@@ -297,6 +297,16 @@ class StartGame {
     }
 }
 
+class Space {
+    constructor(shapes, materials) {
+        this.shapes = shapes;
+        this.materials = materials;
+    }
+
+    draw_space(context, program_state) {
+        this.shapes.square.draw(context, program_state, Mat4.identity().times(Mat4.scale(25, 25, 25)), this.materials.space);
+    }
+}
 
 export class Project extends Scene {
     /**
@@ -373,6 +383,11 @@ export class Project extends Scene {
                 ambient: 1,
                 texture: new Texture("assets/start.png")
             }),
+            space: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/space.jpg")
+            }),
         }
         let randtype = Math.floor(Math.random() * 3) + 1;
         spaceships.push(new SpaceShip(this.shapes, this.materials,0, 2.5, randtype));
@@ -404,6 +419,8 @@ export class Project extends Scene {
         const light_position1 = vec4(0, -15, 50, 1);
         program_state.lights = [new Light(light_position1, color(0, 0.4, 0.8, 1), 1500)];
         let current_time = program_state.animation_time;
+
+
 
         if (gameStarted && gameEnded){
             let gameover = new GameOver(this.shapes, this.materials);
@@ -482,6 +499,9 @@ export class Project extends Scene {
                 }
                 explosions[i].draw_explosion(context, program_state);
             }
+
+            let space = new Space(this.shapes, this.materials);
+            space.draw_space(context, program_state);
         }
     }
 }

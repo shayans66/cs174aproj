@@ -873,6 +873,12 @@ const Movement_Controls = defs.Movement_Controls =
         }
 
         make_control_panel() {
+            this.live_string(box => {
+                box.textContent = "Click on spaceships to destroy them";
+            });
+            this.live_string(box => {
+                box.textContent = "Move the bucket using ‘a’ (left) and ‘d’ (right)";
+            });
             // make_control_panel(): Sets up a panel of interactive HTML elements, including
             // buttons with key bindings for affecting this scene, and live info readouts.
             /*
