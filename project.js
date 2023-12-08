@@ -9,7 +9,7 @@ let spaceships = [];
 const canvas = document.getElementById("main-canvas");
 let falling_objects = [];
 let explosions = [];
-let buckets = [];
+let bucket = 0;
 
 const maxX = 20;
 const minX = -20;
@@ -17,7 +17,9 @@ const spawnY = 2.5;
 const maxY = 25;
 let score = 0;
 let time_elapsed = 0;
-let isGameOver = false;
+let gameEnded = false;
+let gameStarted = false;
+
 
 function getMousePos(event) {
     const rect = canvas.getBoundingClientRect();
@@ -129,12 +131,12 @@ canvas.addEventListener("click", function (event) {
 
 document.addEventListener("keydown", function (event) {
     if (event.key === 'a' || event.key === 'A'){
-        if (buckets[0].x > -20)
-            buckets[0].x -= 1.02;
+        if (bucket.x > -20)
+            bucket.x -= 1.02;
     }
     if (event.key === 'd' || event.key === 'D'){
-        if (buckets[0].x < 20)
-            buckets[0].x += 1.02;
+        if (bucket.x < 20)
+            bucket.x += 1.02;
     }
 });
 
@@ -259,6 +261,10 @@ class GameOver {
     constructor(shapes, materials) {
         this.shapes = shapes;
         this.materials = materials;
+        spaceships = [];
+        falling_objects = [];
+        explosions = [];
+        bucket = 0;
     }
 
     draw_game_over(context, program_state, x, y) {
@@ -373,7 +379,7 @@ export class Project extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.previous_time = 0;
 
-        buckets.push(new Bucket(this.shapes, this.materials, "right", 0));
+        bucket = new Bucket(this.shapes, this.materials, "right", 0);
     }
 
     make_control_panel() {
@@ -395,18 +401,20 @@ export class Project extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
 
-        const light_position1 = vec4(10, 10, 10, 1);
-        const light_position2 = vec4(-10, 10, 10, 1);
-        const light_position3 = vec4(0, -10, 10, 1);
-        program_state.lights = [new Light(light_position1, color(1, 1, 1, 1), 10000)];
+        const light_position1 = vec4(0, -15, 50, 1);
+        program_state.lights = [new Light(light_position1, color(0, 0.4, 0.8, 1), 1500)];
         let current_time = program_state.animation_time;
-        if (!isGameOver){
-            time_elapsed = current_time/1000;
-        }
 
-        if (current_time >= 30 * 1000) {
+        if (gameStarted && gameEnded){
             let gameover = new GameOver(this.shapes, this.materials);
-            isGameOver = true;
+            gameEnded = true;
+            gameover.draw_game_over(context, program_state);
+            return;
+        }
+        if (current_time >= 30 * 1000) {
+            time_elapsed = 30;
+            let gameover = new GameOver(this.shapes, this.materials);
+            gameEnded = true;
             gameover.draw_game_over(context, program_state);
             return;
         }
@@ -417,70 +425,63 @@ export class Project extends Scene {
             return;
         }
 
-        if (current_time - this.previous_time > 2000) {
-            let random_x = (Math.random() - 0.5) * (maxX - minX);
-            let randtype = Math.floor(Math.random() * 3) + 1;
-            spaceships.push(new SpaceShip(this.shapes, this.materials, random_x, spawnY, randtype))
-            this.previous_time = current_time;
+        if (current_time <= 30 * 1000){
+            if (current_time >= 3 * 1000) {
+                gameStarted = true;
+            }
         }
-
-        spaceships = spaceships.filter(spaceship => spaceship.y < maxY);
-
-        let model_transform = Mat4.identity();
-        for (let i = 0; i < spaceships.length; i++){
-            spaceships[i].y += gravitydiff(spaceships[i].mass);
-            spaceships[i].draw_spaceship(context, program_state, model_transform);
-        }
-        for (let i = 0; i < buckets.length; i++) {
-           /* if (buckets[i].direction === "left") {
-                buckets[i].x -= .1;
+        console.log(gameStarted);
+        if (gameStarted && !gameEnded) {
+            time_elapsed = current_time / 1000;
+            if (current_time - this.previous_time > 2000) {
+                let random_x = (Math.random() - 0.5) * (maxX - minX);
+                let randtype = Math.floor(Math.random() * 3) + 1;
+                spaceships.push(new SpaceShip(this.shapes, this.materials, random_x, spawnY, randtype))
+                this.previous_time = current_time;
             }
-            else {
-                buckets[i].x += .1;
-            }
-            if (buckets[i].x >= 20) {
-                buckets[i].direction = "left";
-            }
-            else if (buckets[i].x <= -20) {
-                buckets[i].direction = "right";
-            }*/
-            buckets[i].draw_bucket(context, program_state, model_transform);
-        }
 
-        // Iterate through falling objects and draw them
-        // console.log(falling_objects);
-
-        // check for collision with bucket
-        let bucket = buckets[0];
-        for (let i = 0; i < falling_objects.length; i++) {
-            let obj_type = falling_objects[i].type;
-            let a = falling_objects[i];
-            if (falling_objects[i].x > bucket.x - 2 && falling_objects[i].x < bucket.x + 2 && falling_objects[i].y <= 3 && falling_objects[i].y >= 0) {
-                addScore(obj_type);
-                falling_objects[i].keepIn = false;
+            let model_transform = Mat4.identity();
+            for (let i = 0; i < spaceships.length; i++) {
+                spaceships[i].y += gravitydiff(spaceships[i].mass);
+                spaceships[i].draw_spaceship(context, program_state, model_transform);
             }
-            falling_objects[i].time += 1;
-            falling_objects[i].update_position(); // Update the position of falling objects based on gravity
-            falling_objects[i].draw_falling_object(context, program_state, model_transform); // Draw falling objects
-        }
-        falling_objects = falling_objects.filter(falling_object => falling_object.y >= 0);
+            spaceships = spaceships.filter(spaceship => spaceship.y < maxY);
+            bucket.draw_bucket(context, program_state, model_transform);
 
-        falling_objects = falling_objects.filter(falling_object => falling_object.keepIn);
+            for (let i = 0; i < falling_objects.length; i++) {
+                let obj_type = falling_objects[i].type;
+                let a = falling_objects[i];
+                if (falling_objects[i].x > bucket.x - 2.25 && falling_objects[i].x < bucket.x + 2.25 && falling_objects[i].y <= 3 && falling_objects[i].y >= 0) {
+                    if (falling_objects[i].type === 3) {
+                        let gameover = new GameOver(this.shapes, this.materials);
+                        gameEnded = true;
+                        gameover.draw_game_over(context, program_state);
+                        return;
+                    }
+                    addScore(obj_type);
+                    falling_objects[i].keepIn = false;
+                }
+                falling_objects[i].time += 1;
+                falling_objects[i].update_position(); // Update the position of falling objects based on gravity
+                falling_objects[i].draw_falling_object(context, program_state, model_transform); // Draw falling objects
+            }
+            falling_objects = falling_objects.filter(falling_object => falling_object.y >= 0);
+            falling_objects = falling_objects.filter(falling_object => falling_object.keepIn);
 
 
-        for (let i = 0; i < explosions.length; i++) {
-            if (explosions[i].time_to_live <= 0){
-                explosions[i].delete();
-                continue;
+            for (let i = 0; i < explosions.length; i++) {
+                if (explosions[i].time_to_live <= 0) {
+                    explosions[i].delete();
+                    continue;
+                } else {
+                    explosions[i].time_to_live -= (current_time - explosions[i].time_drawn)
+                }
+                if (explosions[i].first_call === true) {
+                    explosions[i].first_call = false;
+                    explosions[i].time_drawn = current_time;
+                }
+                explosions[i].draw_explosion(context, program_state);
             }
-            else {
-                explosions[i].time_to_live -= (current_time - explosions[i].time_drawn)
-            }
-            if (explosions[i].first_call === true) {
-                explosions[i].first_call = false;
-                explosions[i].time_drawn = current_time;
-            }
-            explosions[i].draw_explosion(context, program_state);
         }
     }
 }
