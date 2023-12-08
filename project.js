@@ -16,6 +16,7 @@ const spawnY = 2.5;
 const maxY = 25;
 let score = 0;
 let time_elapsed = 0;
+let isGameOver = false;
 
 function getMousePos(event) {
     const rect = canvas.getBoundingClientRect();
@@ -50,18 +51,23 @@ class FallingObject {
         this.materials = materials;
         this.x = x;
         this.y = y;
-        this.initial_y = y; // Store the initial y position for reference
-        this.vertical_speed = 0; // Initialize vertical speed
         this.falling = false; // Flag to indicate if object is falling
-        // this.is_falling = true; // Flag to indicate if object is falling
-
-        this.gravity = 0.005; // Set a gravity value
-        this.idk = .01
-
-        this.velocity_y = .1;
-        this.acceleration_y = .01; // Update vertical velocity based on gravity
+        this.keepIn = true;
         this.type = type1;
+        this.mass = 0;
+        if (this.type === 1){
+            this.mass = 2.5;
+        }
+        else if (this.type === 2){
+            this.mass = 3.5;
+        }
+        else if (this.type === 3){
+            this.mass = 3;
+        }
+        this.velocity = 0;
+        this.time = 0;
     }
+
 
     draw_falling_object(context, program_state, model_transform) {
         model_transform = model_transform.times(Mat4.translation(this.x, this.y, 0));
@@ -81,22 +87,17 @@ class FallingObject {
 
     update_position() {
         if (this.falling) {
-            this.gravity += this.idk
-            this.velocity_y -= this.gravity; // Update vertical velocity based on gravity
-            this.y += this.velocity_y; // Update vertical position based on velocity
-            // return this.y
+            let time = this.time/1000;
+            const gravity = 9.8; // Acceleration due to gravity in m/s^2
+            this.y -= gravity * this.mass * 0.01;
+            const dampingFactor = 0.05; // Adjust this factor to control damping
 
-            // console.log(this.velocity_y);
+            // Update the object's y value using the free fall equation
+            this.y = this.y + (this.velocity * time) - (0.5 * gravity * time ** 2);
 
-            return -this.velocity_y; // Update vertical position based on velocity
-            //return this.y
+            // Update the object's velocity with damping
+            this.velocity = this.velocity - gravity * time + dampingFactor * this.velocity;
 
-
-            // Optional: Stop falling when the object reaches a certain height or ground level (e.g., y = 0)
-            // You can add additional conditions to stop falling based on your game's requirements
-            // For example, if (this.y <= 0) { this.is_falling = false; }
-
-            // return this.y
         }
     }
 
@@ -126,7 +127,6 @@ canvas.addEventListener("click", function (event) {
 });
 
 
-
 function convertToB(x, y) {
     // Define the transformation parameters
     const sx = 0.03704; // Scaling factor for x-axis
@@ -143,19 +143,9 @@ function convertToB(x, y) {
     return { x: xPrime, y: yPrime };
 }
 
-function gravitydiff(type){
+function gravitydiff(mass){
     const thrust = 100;
     const gravity = 9.8; // m/s², acceleration due to gravity
-    let mass = 0;
-    if (type === 1){ // blue spaceship, light
-        mass = 2.5;
-    }
-    else if (type === 2){ // golden spaceship, heavy
-        mass = 3.5;
-    }
-    else if (type === 3){ // red spaceship, tnt
-        mass = 3;
-    }
     const netForce= thrust - mass * gravity;
     const acceleration = netForce / mass;
     const positionChange = acceleration / 100; // 0.001 seconds for milliseconds
@@ -171,12 +161,15 @@ class SpaceShip {
         this.type = 0;
         if (type1 === 1){
             this.type = 1; // blue spaceship, light, fast, and most points
+            this.mass = 2.5;
         }
         else if (type1 === 2){ // golden spaceship, heavy, slow, and least points
             this.type = 2;
+            this.mass = 3.5;
         }
         else if (type1 === 3){ // red spaceship, has tnt, moderate weight
             this.type = 3;
+            this.mass = 3;
         }
     }
 
@@ -373,10 +366,13 @@ export class Project extends Scene {
         const light_position3 = vec4(0, -10, 10, 1);
         program_state.lights = [new Light(light_position1, color(1, 1, 1, 1), 10000)];
         let current_time = program_state.animation_time;
-        time_elapsed = current_time/1000;
+        if (!isGameOver){
+            time_elapsed = current_time/1000;
+        }
 
         if (current_time >= 30 * 1000) {
             let gameover = new GameOver(this.shapes, this.materials);
+            isGameOver = true;
             gameover.draw_game_over(context, program_state);
             return;
         }
@@ -392,8 +388,7 @@ export class Project extends Scene {
 
         let model_transform = Mat4.identity();
         for (let i = 0; i < spaceships.length; i++){
-            //console.log(gravitydiff(spaceships[i].type));
-            spaceships[i].y += gravitydiff(spaceships[i].type);
+            spaceships[i].y += gravitydiff(spaceships[i].mass);
             spaceships[i].draw_spaceship(context, program_state, model_transform);
         }
         for (let i = 0; i < this.buckets.length; i++) {
@@ -420,28 +415,18 @@ export class Project extends Scene {
         for (let i = 0; i < falling_objects.length; i++) {
             let obj_type = falling_objects[i].type;
             let a = falling_objects[i];
-
-            console.log(a.y);
-            if (false
-                //a.x > bucket.x - 2 && a.x < bucket.x + 2 && a.y <= 3
-            ) {
-                console.log("HERE");
+            if (falling_objects[i].x > bucket.x - 2 && falling_objects[i].x < bucket.x + 2 && falling_objects[i].y <= 3 && falling_objects[i].y >= 0) {
                 addScore(obj_type);
-                console.log("Added");
-                falling_objects.splice(i, 1);
-                i--;
+                falling_objects[i].keepIn = false;
             }
-
-            //console.log(i,a);
-            let vel = a.update_position(); // Update the position of falling objects based on gravity
-            // model_transform = model_transform.times(Mat4.translation(1, 0, 0));
-            let tmp2 = model_transform.times(Mat4.translation(0, -vel, 0));
-            // model_transform = model_transform.times(Mat4.translation(0, -1, 0));
-            // falling_objects[i].draw(context, program_state, model_transform); // Draw falling objects
-            falling_objects[i].draw_falling_object(context, program_state, tmp2); // Draw falling objects
-
-            // if(a.y<0)falling_objects[i].delete();
+            falling_objects[i].time += 1;
+            falling_objects[i].update_position(); // Update the position of falling objects based on gravity
+            falling_objects[i].draw_falling_object(context, program_state, model_transform); // Draw falling objects
         }
+        falling_objects = falling_objects.filter(falling_object => falling_object.y >= 0);
+
+        falling_objects = falling_objects.filter(falling_object => falling_object.keepIn);
+
 
         for (let i = 0; i < explosions.length; i++) {
             if (explosions[i].time_to_live <= 0){
@@ -459,4 +444,3 @@ export class Project extends Scene {
         }
     }
 }
-
