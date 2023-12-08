@@ -261,6 +261,24 @@ class GameOver {
     }
 }
 
+class StartGame {
+    constructor(shapes, materials) {
+        this.shapes = shapes;
+        this.materials = materials;
+    }
+
+    draw_start(context, program_state, x, y) {
+        this.shapes.square.draw(
+            context,
+            program_state,
+            Mat4.identity()
+                .times(Mat4.translation(0, 11, 0))
+                .times(Mat4.scale(10, 10, 10)), // Adjust the scale if needed
+            this.materials.start
+        );
+    }
+}
+
 
 export class Project extends Scene {
     /**
@@ -332,6 +350,11 @@ export class Project extends Scene {
                 ambient: 1,
                 texture: new Texture("assets/game.png")
             }),
+            start: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("assets/start.png")
+            }),
         }
         let randtype = Math.floor(Math.random() * 3) + 1;
         spaceships.push(new SpaceShip(this.shapes, this.materials,0, 2.5, randtype));
@@ -374,6 +397,12 @@ export class Project extends Scene {
             let gameover = new GameOver(this.shapes, this.materials);
             isGameOver = true;
             gameover.draw_game_over(context, program_state);
+            return;
+        }
+
+        if (current_time <= 3 * 1000) {
+            let start = new StartGame(this.shapes, this.materials);
+            start.draw_start(context, program_state);
             return;
         }
 
